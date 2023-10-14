@@ -1,77 +1,42 @@
 use dagre_rust::{layout, GraphConfig, GraphEdge, GraphNode};
 use graphlib_rust::{Graph, GraphOption};
-use serde::{ser::SerializeStruct, Serialize, Serializer};
-use std::{collections::HashMap, hash::Hash};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
+extern crate console_error_panic_hook;
+use std::panic;
+extern crate web_sys;
+
+// A macro to provide `println!(..)`-style syntax for `console.log` logging.
+macro_rules! log {
+    ( $( $t:tt )* ) => {
+        web_sys::console::log_1(&format!( $( $t )* ).into());
+    }
+}
 
 pub type GraphId = String;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct IBounds {
     pub x: f32,
     pub y: f32,
     pub width: f32,
     pub height: f32,
 }
-impl Serialize for IBounds {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut state = serializer.serialize_struct("IBounds", 4)?;
 
-        // Serialize the fields of IBounds
-        state.serialize_field("x", &self.x)?;
-        state.serialize_field("y", &self.y)?;
-        state.serialize_field("width", &self.width)?;
-        state.serialize_field("height", &self.height)?;
-
-        state.end()
-    }
-}
-
-#[derive(Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct IPoint {
     pub x: f32,
     pub y: f32,
 }
-impl Serialize for IPoint {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut state = serializer.serialize_struct("IPoint", 2)?;
 
-        // Serialize the fields of IPoint
-        state.serialize_field("x", &self.x)?;
-        state.serialize_field("y", &self.y)?;
-
-        state.end()
-    }
-}
-
-#[derive(Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct AssetLayout {
     pub id: GraphId,
     pub bounds: IBounds,
 }
 
-impl Serialize for AssetLayout {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut state = serializer.serialize_struct("AssetLayout", 2)?;
-
-        // Serialize the fields of AssetLayout
-        state.serialize_field("id", &self.id)?;
-        state.serialize_field("bounds", &self.bounds)?;
-
-        state.end()
-    }
-}
-
-#[derive(Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct GroupLayout {
     pub id: GraphId,
     pub groupName: String,
@@ -81,53 +46,14 @@ pub struct GroupLayout {
     pub bounds: IBounds,
 }
 
-impl Serialize for GroupLayout {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut state = serializer.serialize_struct("GroupLayout", 6)?;
-
-        // Serialize the fields of GroupLayout
-        state.serialize_field("id", &self.id)?;
-        state.serialize_field("groupName", &self.groupName)?;
-        state.serialize_field("repositoryName", &self.repositoryName)?;
-        state.serialize_field("repositoryLocationName", &self.repositoryLocationName)?;
-        state.serialize_field(
-            "repositoryDisambiguationRequired",
-            &self.repositoryDisambiguationRequired,
-        )?;
-        state.serialize_field("bounds", &self.bounds)?;
-
-        state.end()
-    }
-}
-
-#[derive(Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct AssetLayoutEdge {
     pub from: IPoint,
     pub fromId: GraphId,
     pub to: IPoint,
     pub toId: GraphId,
 }
-impl Serialize for AssetLayoutEdge {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut state = serializer.serialize_struct("AssetLayoutEdge", 4)?;
-
-        // Serialize the fields of AssetLayoutEdge
-        state.serialize_field("from", &self.from)?;
-        state.serialize_field("fromId", &self.fromId)?;
-        state.serialize_field("to", &self.to)?;
-        state.serialize_field("toId", &self.toId)?;
-
-        state.end()
-    }
-}
-
-#[derive(Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct AssetGraphLayout {
     pub width: i32,
     pub height: i32,
@@ -136,38 +62,18 @@ pub struct AssetGraphLayout {
     pub groups: HashMap<String, GroupLayout>,
 }
 
-// Implement the Serialize trait for AssetGraphLayout
-impl Serialize for AssetGraphLayout {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut state = serializer.serialize_struct("AssetGraphLayout", 5)?;
-
-        // Serialize the fields of AssetGraphLayout
-        state.serialize_field("width", &self.width)?;
-        state.serialize_field("height", &self.height)?;
-        state.serialize_field("edges", &self.edges)?;
-        state.serialize_field("nodes", &self.nodes)?;
-        state.serialize_field("groups", &self.groups)?;
-
-        state.end()
-    }
-}
-
-#[derive(Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct GraphData {
     pub nodes: HashMap<GraphId, AssetGraphNode>,
     pub downstream: HashMap<GraphId, HashMap<GraphId, bool>>,
     pub upstream: HashMap<GraphId, HashMap<GraphId, bool>>,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct AssetKey {
     pub path: Vec<String>,
 }
-
-#[derive(Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct AssetNode {
     pub __typename: String,
     pub id: String,
@@ -189,40 +95,55 @@ pub struct AssetNode {
     pub assetKey: AssetKey,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct Repository {
     pub __typename: String,
     pub id: String,
     pub name: String,
     pub location: RepositoryLocation,
 }
-
-#[derive(Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct RepositoryLocation {
     pub __typename: String,
     pub id: String,
     pub name: String,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct AssetGraphNode {
     pub id: GraphId,
     pub assetKey: AssetKey,
     pub definition: AssetNode,
 }
-
 const GROUP_NODE_PREFIX: &str = "group__";
 const MARGIN: i32 = 100;
 
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct LayoutAssetGraphOptions {
     pub horizontalDAGs: bool,
 }
 
-// #[wasm_bindgen]
-pub fn layout_asset_graph(
-    graph_data: GraphData,
-    opts: LayoutAssetGraphOptions,
-) -> AssetGraphLayout {
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
+pub struct LayoutAssetGraphArgs {
+    pub graphData: GraphData,
+    pub opts: LayoutAssetGraphOptions,
+}
+
+#[wasm_bindgen]
+pub fn layout_asset_graph(args: &str) -> String {
+    panic::set_hook(Box::new(console_error_panic_hook::hook));
+    let args_json: Result<LayoutAssetGraphArgs, serde_json::Error> = serde_json::from_str(args);
+    let mut args = LayoutAssetGraphArgs::default();
+    match args_json {
+        Ok(resolved_args) => args = resolved_args,
+        Err(err) => {
+            // Handle the error, for example, print the error message.
+            eprintln!("Error: {}", err);
+        }
+    }
+    let graph_data = args.graphData;
+    let opts = args.opts;
+
     let mut g: Graph<GraphConfig, GraphNode, GraphEdge> =
         graphlib_rust::graph::Graph::new(Some(GraphOption {
             compound: Some(true),
@@ -240,7 +161,7 @@ pub fn layout_asset_graph(
             GROUP_NODE_PREFIX,
             node.definition.repository.location.name,
             node.definition.repository.name,
-            node.definition.groupName.unwrap_or_default()
+            node.definition.groupName.clone().unwrap_or_default()
         )
     };
 
@@ -292,10 +213,11 @@ pub fn layout_asset_graph(
         let mut g_node = GraphNode::default();
         g_node.width = asset_node_dimensions.width;
         g_node.height = asset_node_dimensions.height;
-        g.set_node(node.id, Some(g_node));
+        g.set_node(node.id.clone(), Some(g_node));
 
         if show_groups && node.definition.groupName.is_some() {
-            g.set_parent(&node.id, Some(parent_node_id_for_node(node)));
+            g.set_parent(&node.id, Some(parent_node_id_for_node(node)))
+                .unwrap_throw();
         }
     }
 
@@ -307,7 +229,8 @@ pub fn layout_asset_graph(
                 continue;
             }
 
-            g.set_edge(upstream_id, downstream_id, None, None);
+            g.set_edge(upstream_id, downstream_id, None, None)
+                .unwrap_throw();
 
             if !should_render(graph_data.nodes.get(downstream_id)) {
                 links_to_assets_outside_graphed_set.insert(downstream_id.clone(), true);
@@ -330,14 +253,14 @@ pub fn layout_asset_graph(
         );
     }
 
+    log!("Starting layouting!");
     layout::layout(&mut g);
+    log!("Finished layouting!");
 
     let mut max_width = 0;
     let mut max_height = 0;
 
     for id in g.nodes() {
-        let dagre_node = g.node(&id);
-
         if let Some(dagre_node) = g.node(&id) {
             let bounds = IBounds {
                 x: dagre_node.x - dagre_node.width / 2.0,
@@ -346,7 +269,14 @@ pub fn layout_asset_graph(
                 height: dagre_node.height,
             };
             if !id.starts_with(GROUP_NODE_PREFIX) {
-                nodes.get_mut(&id).unwrap().bounds = bounds.clone();
+                let id_copy = id.clone();
+                nodes.insert(
+                    id,
+                    AssetLayout {
+                        id: id_copy,
+                        bounds: bounds.clone(),
+                    },
+                );
             }
             max_width = max_width.max((dagre_node.x + dagre_node.width / 2.0).round() as i32);
             max_height = max_height.max((dagre_node.y + dagre_node.height / 2.0).round() as i32);
@@ -376,8 +306,8 @@ pub fn layout_asset_graph(
     for edge in g.edges() {
         let v = edge.v;
         let w = edge.w;
-        let v_node = g.node(&edge.v).unwrap_or(&GraphNode::default());
-        let w_node = g.node(&edge.w).unwrap_or(&GraphNode::default());
+        let v_node = g.node(&v).unwrap_throw();
+        let w_node = g.node(&w).unwrap_throw();
 
         let v_x_inset = if links_to_assets_outside_graphed_set.contains_key(&v) {
             16
@@ -421,13 +351,14 @@ pub fn layout_asset_graph(
         edges.push(asset_layout_edge);
     }
 
-    AssetGraphLayout {
+    serde_json::to_string(&AssetGraphLayout {
         width: max_width + MARGIN,
         height: max_height + MARGIN,
         edges,
         nodes,
         groups,
-    }
+    })
+    .unwrap_throw()
 }
 
 pub const ASSET_LINK_NAME_MAX_LENGTH: usize = 10;
@@ -505,49 +436,4 @@ pub fn get_asset_node_dimensions(def: &AssetNode) -> IBounds {
             height,
         }
     }
-}
-
-fn main() {
-    let nodes_json = serde_json::from_str("{\"[\\\"alpha\\\"]\":{\"id\":\"[\\\"alpha\\\"]\",\"assetKey\":{\"__typename\":\"AssetKey\",\"path\":[\"alpha\"]},\"definition\":{\"__typename\":\"AssetNode\",\"id\":\"toys.table_metadata_repository.[\\\"alpha\\\"]\",\"groupName\":\"default\",\"isExecutable\":true,\"hasMaterializePermission\":true,\"repository\":{\"__typename\":\"Repository\",\"id\":\"65485f1efe31f7afff2238ada1c71beba46df2e0\",\"name\":\"table_metadata_repository\",\"location\":{\"__typename\":\"RepositoryLocation\",\"id\":\"toys\",\"name\":\"toys\"}},\"dependencyKeys\":[],\"dependedByKeys\":[],\"graphName\":null,\"jobNames\":[\"__ASSET_JOB\"],\"opNames\":[\"alpha\"],\"opVersion\":null,\"description\":null,\"computeKind\":null,\"isPartitioned\":false,\"isObservable\":false,\"isSource\":false,\"assetKey\":{\"__typename\":\"AssetKey\",\"path\":[\"alpha\"]}}}}");
-    let downstream_json = serde_json::from_str("{}");
-    let upstream_json = serde_json::from_str("{}");
-
-    let mut nodes: HashMap<String, AssetGraphNode> = HashMap::default();
-    let mut downstream: HashMap<String, HashMap<String, bool>> = HashMap::default();
-    let mut upstream: HashMap<String, HashMap<String, bool>> = HashMap::default();
-
-    // Handle the Result
-    match nodes_json {
-        Ok(nodes) => {}
-        Err(err) => {
-            // Handle the error, for example, print the error message.
-            eprintln!("Error: {}", err);
-        }
-    }
-    match downstream_json {
-        Ok(downstream) => {}
-        Err(err) => {
-            // Handle the error, for example, print the error message.
-            eprintln!("Error: {}", err);
-        }
-    }
-    match upstream_json {
-        Ok(upstream) => {}
-        Err(err) => {
-            // Handle the error, for example, print the error message.
-            eprintln!("Error: {}", err);
-        }
-    }
-
-    let layout_result = layout_asset_graph(
-        GraphData {
-            nodes,
-            downstream,
-            upstream,
-        },
-        LayoutAssetGraphOptions {
-            horizontalDAGs: true,
-        },
-    );
-    println!("{:?}", serde_json::to_string_pretty(&layout_result))
 }
