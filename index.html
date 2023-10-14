@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en-US">
+
+<head>
+  <meta charset="utf-8" />
+  <title>hello-wasm example</title>
+</head>
+
+<body>
+  <script type="module">
+    import init, {layout_asset_graph} from "./pkg/dagre_wasm.js";
+    const JsonPromise = new Promise((res) => {
+      console.log('fetching');
+      fetch("huge_graph_2.json").then((response) => {
+        res(response.json())
+      })
+    })
+    init().then(() => {
+      JsonPromise.then((json) => {
+        const start = performance.now();
+        console.log(JSON.stringify({json}));
+        const result = layout_asset_graph(JSON.stringify(json));
+        const end = performance.now();
+        console.log('elapsed', end - start);
+        document.body.innerHTML = "<pre>" + JSON.stringify(JSON.parse(result), null, 2) + "</pre>"
+      })
+    });
+  </script>
+</body>
+
+</html>
