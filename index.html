@@ -18,7 +18,7 @@
     init().then(() => {
       JsonPromise.then((json) => {
         const start = performance.now();
-        console.log(JSON.stringify({json}));
+        console.log(json);
         const result = layout_asset_graph(JSON.stringify(json));
         const end = performance.now();
         console.log('elapsed', end - start);
