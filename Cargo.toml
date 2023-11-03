@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 console_error_panic_hook = "0.1.7"
 dagre_rust = "0.0.5"
-graphlib_rust = "0.0.2"
+graphlib_rust = "0.0.3"
 serde = {version ="1.0.189", features=["derive"]}
 serde_json = "1.0.107"
 wasm-bindgen = "0.2.87"
@@ -18,3 +18,6 @@ web-sys = {version= "0.3.64", features = ["console"]}
 [lib]
 crate-type = ["cdylib"]
 
+[patch.crates-io]
+dagre_rust = { path = "/Users/marcosalazar/dagre-wasm/dagre_rust-0.0.5" }
+graphlib_rust = { path = "/Users/marcosalazar/dagre-wasm/graphlib_rust-0.0.3" }

@@ -1,0 +1,13 @@
+[package]
+name = "graphlib_rust"
+version = "0.0.3"
+authors = ["Ameer Hamza <r3alst@gmail.com>"]
+categories = ["graph", "dagre"]
+description = "Dagre's Graphlib implementation in Rust"
+keywords = ["graphlib", "dagre", "graph", "dag"]
+license = "Apache-2.0"
+repository = "https://github.com/r3alst/graphlib-rust"
+edition = "2021"
+
+[dependencies]
+ordered_hashmap = "0.0.3"

@@ -121,6 +121,8 @@ const MARGIN: i32 = 100;
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct LayoutAssetGraphOptions {
     pub horizontalDAGs: bool,
+    pub longestPath: bool,
+    pub tightTree: bool,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
@@ -150,6 +152,31 @@ pub fn layout_asset_graph(args: &str) -> String {
             directed: Some(false),
             multigraph: Some(false),
         }));
+
+    let ranker = if opts.tightTree {
+        "tight-tree"
+    } else if opts.longestPath {
+        "longest-path"
+    } else {
+        "network-simplex"
+    };
+    let mut config = GraphConfig::default();
+    config.ranker = Some(ranker.to_string());
+    config.marginx = Some(MARGIN as f32);
+    config.marginy = Some(MARGIN as f32);
+
+    if opts.horizontalDAGs {
+        config.rankdir = Some("LR".to_string());
+        config.nodesep = Some(-10.0);
+        config.edgesep = Some(90.0);
+        config.ranksep = Some(60.0);
+    } else {
+        config.rankdir = Some("TB".to_string());
+        config.nodesep = Some(40.0);
+        config.edgesep = Some(10.0);
+        config.ranksep = Some(10.0);
+    }
+    g.set_graph(config);
 
     let mut nodes: HashMap<GraphId, AssetLayout> = HashMap::new();
     let mut groups: HashMap<String, GroupLayout> = HashMap::new();
@@ -436,4 +463,9 @@ pub fn get_asset_node_dimensions(def: &AssetNode) -> IBounds {
             height,
         }
     }
+}
+
+fn print_elapsed_time(start_time: std::time::Instant, label: &str) {
+    let elapsed = start_time.elapsed();
+    println!("{} elapsed time: {:?}", label, elapsed);
 }

@@ -11,7 +11,7 @@
     import init, {layout_asset_graph} from "./pkg/dagre_wasm.js";
     const JsonPromise = new Promise((res) => {
       console.log('fetching');
-      fetch("small_graph.json").then((response) => {
+      fetch("huge_graph.json").then((response) => {
         res(response.json())
       })
     })
